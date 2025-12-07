@@ -1,0 +1,10 @@
+requests
+beautifulsoup4
+lxml
+fake-useragent
+fastapi
+uvicorn
+pydantic
+python-dotenv
+selenium
+webdriver-manager
