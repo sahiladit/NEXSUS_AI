@@ -1,84 +1,65 @@
-def compare_with_npi(user_details, npi_info):
+def compare_with_npi(npi_info, user_details):
     """
-    user_details = {
-        "first_name": "",
-        "last_name": "",
-        "gender": "",
-        "city": "",
-        "state": "",
-        "taxonomy": ""
-    }
-
-    npi_info = output from verify_npi()
+    npi_info = result of verify_npi()
+    user_details = {"first_name": "", "last_name": ""}
     """
 
     score = 0
-    mismatches = []
-    matches = []
+    report = []
 
-    # -------- NAME MATCH --------
-    if user_details.get("first_name"):
-        if user_details["first_name"].lower() == npi_info["first_name"].lower():
-            score += 20
-            matches.append("First name matches")
-        else:
-            mismatches.append("First name mismatch")
+    # safe extract
+    basic = {
+        "first_name": (npi_info.get("first_name") or "").lower(),
+        "last_name": (npi_info.get("last_name") or "").lower(),
+        "gender": (npi_info.get("gender") or "").lower()
+    }
 
-    if user_details.get("last_name"):
-        if user_details["last_name"].lower() == npi_info["last_name"].lower():
-            score += 20
-            matches.append("Last name matches")
-        else:
-            mismatches.append("Last name mismatch")
+    addresses = npi_info.get("addresses", [])
+    taxonomies = npi_info.get("taxonomy", [])
 
-    # -------- GENDER MATCH --------
-    if user_details.get("gender"):
-        if user_details["gender"].lower() == str(npi_info["gender"]).lower():
-            score += 10
-            matches.append("Gender matches")
-        else:
-            mismatches.append("Gender mismatch")
-
-    # -------- ADDRESS MATCH --------
-    if npi_info["addresses"]:
-        addr = npi_info["addresses"][0]  # primary practice address
-
-        if user_details.get("city"):
-            if user_details["city"].lower() == addr.get("city", "").lower():
-                score += 10
-                matches.append("City matches")
-            else:
-                mismatches.append("City mismatch")
-
-        if user_details.get("state"):
-            if user_details["state"].lower() == addr.get("state", "").lower():
-                score += 10
-                matches.append("State matches")
-            else:
-                mismatches.append("State mismatch")
-
-    # -------- TAXONOMY MATCH --------
-    if user_details.get("taxonomy") and npi_info["taxonomy"]:
-        taxonomy_desc = npi_info["taxonomy"][0].get("desc", "").lower()
-
-        if user_details["taxonomy"].lower() in taxonomy_desc:
-            score += 20
-            matches.append("Specialty matches")
-        else:
-            mismatches.append("Specialty mismatch")
-
-    # -------- FINAL VERDICT --------
-    if score >= 60:
-        status = "VERIFIED"
-    elif score >= 30:
-        status = "PARTIAL MATCH"
+    # --- NAME MATCH ---
+    if user_details["first_name"].lower() == basic["first_name"]:
+        score += 30
     else:
-        status = "FAILED VERIFICATION"
+        report.append("First name mismatch")
+
+    if user_details["last_name"].lower() == basic["last_name"]:
+        score += 30
+    else:
+        report.append("Last name mismatch")
+
+    # --- ADDRESS MATCH ---
+    if addresses:
+        practice_addr = addresses[0]  # primary address
+        npi_city = (practice_addr.get("city") or "").lower()
+        npi_state = (practice_addr.get("state") or "").lower()
+
+        input_city = (user_details.get("city") or "").lower()
+        input_state = (user_details.get("state") or "").lower()
+
+        if input_city and input_city == npi_city:
+            score += 10
+        elif input_city:
+            report.append("City mismatch")
+
+        if input_state and input_state == npi_state:
+            score += 10
+        elif input_state:
+            report.append("State mismatch")
+
+    # --- TAXONOMY MATCH ---
+    if taxonomies:
+        taxonomy_desc = (taxonomies[0].get("desc") or "").lower()
+        if user_details.get("taxonomy"):
+            if user_details["taxonomy"].lower() in taxonomy_desc:
+                score += 20
+            else:
+                report.append("Specialty mismatch")
+
+    status = "VERIFIED" if score >= 60 else "PARTIAL MATCH" if score >= 30 else "FAILED"
 
     return {
         "status": status,
         "score": score,
-        "matches": matches,
-        "mismatches": mismatches,
-        "npi_data": npi_info
+        "report": report
     }

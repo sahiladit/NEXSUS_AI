@@ -6,6 +6,15 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; NexsusBot/1.0; +https://example.com/bot)"
 }
 
+def generate_seeds(name):
+    cleaned = name.replace(" ", "+")
+    return [
+        f"https://duckduckgo.com/html/?q={cleaned}",
+        f"https://www.bing.com/search?q={cleaned}",
+        f"https://www.ask.com/web?q={cleaned}"
+    ]
+
+
 def is_valid_url(url):
     parsed = urlparse(url)
     return bool(parsed.netloc) and bool(parsed.scheme)
@@ -20,8 +29,22 @@ def extract_links(base_url, soup):
     return links
 
 def extract_text(soup):
-    paragraphs = soup.find_all("p")
-    return " ".join(p.get_text(strip=True) for p in paragraphs[:10])
+    text = soup.get_text(" ", strip=True)
+    return " ".join(text.split()[:120])  # first 120 words
+
+
+def generate_seeds(name):
+    cleaned = name.replace(" ", "_")
+
+    return [
+        f"https://en.wikipedia.org/wiki/{cleaned}",
+        f"https://about.me/{cleaned.replace('_','')}",
+        f"https://github.com/{cleaned.replace('_','').lower()}",
+        f"https://en.wikipedia.org/w/index.php?search={cleaned}",
+    ]
+
+
+
 
 def crawl_web(name, max_pages=10, depth=2):
     """
@@ -32,13 +55,7 @@ def crawl_web(name, max_pages=10, depth=2):
     """
 
     # Seed sites we crawl manually
-    seeds = [
-        f"https://en.wikipedia.org/wiki/{name.replace(' ', '_')}",
-        f"https://linkedin.com/in/{name.replace(' ', '').lower()}",
-        f"https://github.com/{name.replace(' ', '').lower()}",
-        f"https://about.me/{name.replace(' ', '').lower()}",
-        f"https://twitter.com/{name.replace(' ', '').lower()}"
-    ]
+    seeds = generate_seeds(name)
 
     visited = set()
     queue = [(url, 0) for url in seeds]
