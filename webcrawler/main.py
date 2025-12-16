@@ -1,30 +1,38 @@
 from agent.agent import call_model_and_act
-from agent.tools import run_verify_person, run_npi_lookup, run_crawl
-
+import json
 
 if __name__ == "__main__":
     name = input("Enter person's name: ").strip()
-    npi  = input("Enter NPI (optional): ").strip()
+    npi = input("Enter NPI (optional): ").strip()
 
-    if npi:
-        user_prompt = f"Verify the person named '{name}' using NPI '{npi}' and web crawling. Return structured reasoning and results."
-    else:
-        user_prompt = f"Verify the person named '{name}' using web crawling and return structured reasoning and results."
+    email = input("Enter email (optional): ").strip()
+    address = input("Enter address (optional): ").strip()
+    city = input("Enter city (optional): ").strip()
+    state = input("Enter state (optional): ").strip()
 
-    out = call_model_and_act(user_prompt)
-    print(out)
+    user_prompt = json.dumps({
+    "task": "verify_identity",
+    "name": name,
+    "npi": npi,
+    "extra_info": {
+        "email": email,
+        "address": address,
+        "city": city,
+        "state": state
+    } }, indent=2)
+
+    user_prompt = {
+    "name": name,
+    "npi": npi,
+    "extra_info": {
+        "address": address,
+        "city": city,
+        "state": state,
+        "email": email
+    }
+}
+
+    result = call_model_and_act(json.dumps(user_prompt))
+    print(result)
 
 
-
-# eg names : Male Names
-# Ethan Miller
-# Jacob Anderson
-# Michael Thompson
-# Daniel Harris
-# Ryan Walker
-# Female Names
-# Emily Parker
-# Sophia Bennett
-# Olivia Carter
-# Madison Lewis
-# Grace Mitchell 
