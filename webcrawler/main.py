@@ -35,4 +35,4 @@ if __name__ == "__main__":
     result = call_model_and_act(json.dumps(user_prompt))
     print(result)
 
-
+# test

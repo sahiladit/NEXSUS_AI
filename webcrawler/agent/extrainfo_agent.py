@@ -25,7 +25,6 @@ def run_extrainfo(name: str, extra_info: dict, web_results: list):
         "PARTIAL MATCH" if score >= 20 else
         "FAILED"
     )
-
     return {
         "status": status,
         "score": score,
