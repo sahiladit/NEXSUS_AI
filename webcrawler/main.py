@@ -3,12 +3,12 @@ import json
 
 if __name__ == "__main__":
     name = input("Enter person's name: ").strip()
-    npi = input("Enter NPI (optional): ").strip()
+    npi = input("Enter NPI : ").strip()
 
-    email = input("Enter email (optional): ").strip()
-    address = input("Enter address (optional): ").strip()
-    city = input("Enter city (optional): ").strip()
-    state = input("Enter state (optional): ").strip()
+    email = input("Enter email : ").strip()
+    practice_name = input("Enter Practice Name (Hospital) : ").strip()
+    city = input("Enter city : ").strip()
+    state = input("Enter state : ").strip()
 
     user_prompt = json.dumps({
     "task": "verify_identity",
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     "npi": npi,
     "extra_info": {
         "email": email,
-        "address": address,
+        "practice_name": practice_name,
         "city": city,
         "state": state
     } }, indent=2)
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     "name": name,
     "npi": npi,
     "extra_info": {
-        "address": address,
+        "practice_name": practice_name,
         "city": city,
         "state": state,
         "email": email
@@ -35,4 +35,4 @@ if __name__ == "__main__":
     result = call_model_and_act(json.dumps(user_prompt))
     print(result)
 
-
+#always do git push origin branch_name
