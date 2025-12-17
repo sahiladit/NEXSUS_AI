@@ -4,11 +4,72 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from agent.tools import run_verify_person, run_npi_lookup, run_crawl
 from agent.extrainfo_agent import run_extrainfo
+from agent.extrainfo_agent import run_extrainfo
+from crawler.crawler import crawl_web
+from npi_verifier.npi_lookup import verify_npi
+import psycopg2
+from urllib.parse import urlparse
 
 
 load_dotenv()
 
 client = OpenAI()
+
+DB_URL = os.getenv("DATABASE_URL")
+
+def insert_provider(
+    first_name,
+    npi,
+    practice_name,
+    city,
+    email,
+    state,
+    address,
+    confidence,
+    dark
+):
+    try:
+        db_url = os.getenv("DATABASE_URL")
+        result = urlparse(db_url)
+
+        conn = psycopg2.connect(
+            dbname=result.path[1:],
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port
+        )
+
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            INSERT INTO provider
+            (npi,first_name,email,address ,city, state,practice_name,confidence, dark)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                npi,
+                first_name,
+                email,
+                address,
+                city,
+                state,
+                practice_name,
+                confidence,
+                dark
+            )
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        print("✅ Provider inserted into DB")
+
+    except Exception as e:
+        print("❌ DB insert failed:", e)
+
 
 TOOLS = [
     {
@@ -55,10 +116,8 @@ TOOLS = [
             },
             "required": ["name"]
         }
-    }
-}
-
-
+    },
+    },
 ]
 
 
@@ -116,7 +175,7 @@ def call_model_and_act(user_text: str, model="gpt-4o-mini"):
     usr_add = extra_info.get("address")
     usr_city = extra_info.get("city")
     usr_state = extra_info.get("state")
-    usr_email = extra_info.get("email")
+    usr_email = extra_info.get("practice_name")
 
     for tool_call in tool_calls:
         name = tool_call.function.name
@@ -152,6 +211,36 @@ def call_model_and_act(user_text: str, model="gpt-4o-mini"):
                     "fuzzy_status": extrainfo_result["status"] if extrainfo_result else "NOT_RUN",
                     "fuzzy_report": extrainfo_result["report"] if extrainfo_result else [],
             }
+              confidence = output["fuzzy_score"]
+              dark = True if confidence < 50 else False
+
+            #   insert_provider(
+            #         first_name=args["name"],               # or split if you want
+            #         npi=user_data.get("npi"),
+            #         practice_name=extra_info.get("address"),
+            #         city=extra_info.get("city"),
+            #         email=extra_info.get("email"),
+            #         state=extra_info.get("state"),
+            #         address=extra_info.get("address"),
+            #         confidence=confidence,
+            #         dark=dark
+            #     )
+              try:
+                with open("demofile.txt", "w") as f:
+                    f.write(f"first_name={args['name']}\n")
+                    f.write(f"npi={user_data.get('npi')}\n")
+                    f.write(f"practice_name={extra_info.get('practice_name')}\n")
+                    f.write(f"city={extra_info.get('city')}\n")
+                    f.write(f"email={extra_info.get('email')}\n")
+                    f.write(f"state={extra_info.get('state')}\n")
+                    f.write(f"address={extra_info.get('address')}\n")
+                    f.write(f"confidence={confidence}\n")
+                    f.write(f"dark={dark}\n")
+
+              except FileNotFoundError:
+                print("File not found")
+
+
 
 
 
